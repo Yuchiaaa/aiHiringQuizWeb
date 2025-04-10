@@ -1,0 +1,526 @@
+{% extends "base.html" %}
+
+{% block body %}
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen active">
+        <h1>AI-powered Hiring Ethics Maze</h1>
+        <p>Make tough choices on emerging technologies. No right answers - only tradeoffs!</p>
+        <button onclick="startGame()">Start</button>
+    </div>
+
+    <!-- Question Screen -->
+    <div id="questionScreen" class="screen">
+        <h2 id="questionText"></h2>
+        <div id="optionsContainer"></div>
+        <div id="scoreBars"></div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="resultScreen" class="screen">
+        <h2>Final Outcomes</h2>
+        <div id="consequences"></div>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+
+    <script>
+        // Game Data
+        const dimensions = ["Efficiency", "Privacy", "Equity", "Trust", "Autonomy", "Security", "Innovation"];
+        let scores = {"Efficiency": 0, "Privacy": 0, "Equity": 0, "Trust": 0, "Autonomy": 0, "Security": 0, "Innovation": 0};
+        let currentQuestion = 0;
+        let questions = [];
+
+        // Sample Question Bank (50 questions in full implementation)
+        const questionBank = [
+        // 1–10: AI in Hiring and Recruitment
+        {
+            "question": "Should companies use AI to screen resumes based on social media activity?",
+            "options": [
+                { "text": "Yes, unrestricted", "impact": { "Efficiency": 3, "Privacy": -2, "Equity": -1 } },
+                { "text": "Only with consent", "impact": { "Efficiency": 1, "Privacy": 1, "Trust": -1 } },
+                { "text": "No, ban it", "impact": { "Equity": 2, "Innovation": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI predict employee turnover risk using behavioral data?",
+            "options": [
+                { "text": "Full use", "impact": { "Efficiency": 3, "Autonomy": -2, "Trust": -1 } },
+                { "text": "Limited to aggregates", "impact": { "Efficiency": 1, "Privacy": 1, "Trust": -1 } },
+                { "text": "Prohibit", "impact": { "Autonomy": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI assess candidate personality via video interviews?",
+            "options": [
+                { "text": "Yes, fully", "impact": { "Efficiency": 2, "Privacy": -3, "Equity": -1 } },
+                { "text": "With oversight", "impact": { "Efficiency": 1, "Trust": 1, "Privacy": -1 } },
+                { "text": "No, ban it", "impact": { "Privacy": 2, "Innovation": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI prioritize diversity in hiring shortlists?",
+            "options": [
+                { "text": "Mandate it", "impact": { "Equity": 3, "Efficiency": -2, "Trust": -1 } },
+                { "text": "Optional tweak", "impact": { "Equity": 1, "Efficiency": 1, "Trust": -1 } },
+                { "text": "No interference", "impact": { "Efficiency": 2, "Equity": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI flag candidates with criminal records?",
+            "options": [
+                { "text": "Always flag", "impact": { "Security": 3, "Equity": -2, "Privacy": -1 } },
+                { "text": "Contextual review", "impact": { "Security": 1, "Equity": 1, "Efficiency": -1 } },
+                { "text": "Ignore records", "impact": { "Equity": 2, "Security": -2, "Trust": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI rank candidates by predicted productivity?",
+            "options": [
+                { "text": "Yes, unrestricted", "impact": { "Efficiency": 3, "Equity": -2, "Autonomy": -1 } },
+                { "text": "With transparency", "impact": { "Efficiency": 1, "Trust": 1, "Equity": -1 } },
+                { "text": "No ranking", "impact": { "Equity": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI analyze tone in candidate emails?",
+            "options": [
+                { "text": "Full analysis", "impact": { "Efficiency": 2, "Privacy": -3, "Trust": -1 } },
+                { "text": "Limited use", "impact": { "Efficiency": 1, "Privacy": 1, "Trust": -1 } },
+                { "text": "Ban it", "impact": { "Privacy": 2, "Efficiency": -2, "Trust": 1 } }
+            ]
+        },
+        {
+            "question": "Should AI automate reference checks?",
+            "options": [
+                { "text": "Fully automate", "impact": { "Efficiency": 3, "Trust": -2, "Equity": -1 } },
+                { "text": "Hybrid approach", "impact": { "Efficiency": 1, "Trust": 1, "Equity": -1 } },
+                { "text": "Human only", "impact": { "Trust": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI reject candidates based on health data?",
+            "options": [
+                { "text": "Yes, if job-relevant", "impact": { "Efficiency": 2, "Equity": -3, "Privacy": -1 } },
+                { "text": "Only with consent", "impact": { "Efficiency": 1, "Equity": 1, "Trust": -1 } },
+                { "text": "No use", "impact": { "Equity": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI tailor job ads based on user profiles?",
+            "options": [
+                { "text": "Yes, fully", "impact": { "Efficiency": 3, "Privacy": -2, "Equity": -1 } },
+                { "text": "Broad targeting", "impact": { "Efficiency": 1, "Privacy": 1, "Equity": -1 } },
+                { "text": "Generic ads", "impact": { "Equity": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+    
+        // 11–20: AI in Workplace Monitoring
+        {
+            "question": "Should AI track employee keystrokes for productivity?",
+            "options": [
+                { "text": "Full tracking", "impact": { "Efficiency": 3, "Privacy": -2, "Trust": -1 } },
+                { "text": "Aggregate data only", "impact": { "Efficiency": 1, "Privacy": 1, "Trust": -1 } },
+                { "text": "No tracking", "impact": { "Trust": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI monitor employee emails for compliance?",
+            "options": [
+                { "text": "Yes, always", "impact": { "Security": 3, "Privacy": -2, "Autonomy": -1 } },
+                { "text": "With notice", "impact": { "Security": 1, "Trust": 1, "Privacy": -1 } },
+                { "text": "Ban it", "impact": { "Privacy": 2, "Security": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI flag mental health risks from work patterns?",
+            "options": [
+                { "text": "Proactive flagging", "impact": { "Autonomy": 3, "Privacy": -2, "Trust": -1 } },
+                { "text": "Opt-in only", "impact": { "Autonomy": 1, "Privacy": 1, "Trust": -1 } },
+                { "text": "No flagging", "impact": { "Privacy": 2, "Autonomy": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI adjust workloads based on stress indicators?",
+            "options": [
+                { "text": "Yes, automatically", "impact": { "Efficiency": 2, "Autonomy": -3, "Trust": -1 } },
+                { "text": "With consent", "impact": { "Efficiency": 1, "Autonomy": 1, "Trust": -1 } },
+                { "text": "No adjustment", "impact": { "Autonomy": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI enforce break times using biometric data?",
+            "options": [
+                { "text": "Mandatory enforcement", "impact": { "Autonomy": 3, "Privacy": -2, "Trust": -1 } },
+                { "text": "Optional nudges", "impact": { "Autonomy": 1, "Privacy": 1, "Trust": -1 } },
+                { "text": "No enforcement", "impact": { "Privacy": 2, "Autonomy": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI detect union activity from communications?",
+            "options": [
+                { "text": "Yes, for management", "impact": { "Security": 3, "Autonomy": -2, "Trust": -1 } },
+                { "text": "Limited scope", "impact": { "Security": 1, "Autonomy": 1, "Trust": -1 } },
+                { "text": "Prohibit", "impact": { "Autonomy": 2, "Security": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI score employee collaboration via chat logs?",
+            "options": [
+                { "text": "Full scoring", "impact": { "Efficiency": 2, "Privacy": -3, "Trust": -1 } },
+                { "text": "Anonymous metrics", "impact": { "Efficiency": 1, "Privacy": 1, "Trust": -1 } },
+                { "text": "No scoring", "impact": { "Trust": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI penalize employees for low engagement scores?",
+            "options": [
+                { "text": "Yes, automatically", "impact": { "Efficiency": 3, "Trust": -2, "Equity": -1 } },
+                { "text": "With review", "impact": { "Efficiency": 1, "Equity": 1, "Trust": -1 } },
+                { "text": "No penalties", "impact": { "Trust": 2, "Efficiency": -2, "Equity": 1 } }
+            ]
+        },
+        {
+            "question": "Should AI monitor remote workers via webcam?",
+            "options": [
+                { "text": "Continuous monitoring", "impact": { "Efficiency": 3, "Privacy": -2, "Trust": -1 } },
+                { "text": "Periodic checks", "impact": { "Efficiency": 1, "Privacy": 1, "Trust": -1 } },
+                { "text": "No monitoring", "impact": { "Trust": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI suggest promotions based on performance data?",
+            "options": [
+                { "text": "Yes, solely", "impact": { "Efficiency": 2, "Equity": -3, "Trust": -1 } },
+                { "text": "With human input", "impact": { "Efficiency": 1, "Equity": 1, "Trust": -1 } },
+                { "text": "No AI role", "impact": { "Trust": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+    
+        // 21–30: AI in Decision-Making and Policy
+        {
+            "question": "Should AI set employee salaries based on market data?",
+            "options": [
+                { "text": "Full automation", "impact": { "Efficiency": 3, "Equity": -2, "Trust": -1 } },
+                { "text": "Advisory role", "impact": { "Efficiency": 1, "Equity": 1, "Trust": -1 } },
+                { "text": "No AI use", "impact": { "Trust": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI approve layoffs based on performance metrics?",
+            "options": [
+                { "text": "Yes, fully", "impact": { "Efficiency": 3, "Trust": -2, "Equity": -1 } },
+                { "text": "With oversight", "impact": { "Efficiency": 1, "Equity": 1, "Trust": -1 } },
+                { "text": "Ban it", "impact": { "Trust": 2, "Efficiency": -2, "Equity": 1 } }
+            ]
+        },
+        {
+            "question": "Should AI enforce anti-discrimination policies?",
+            "options": [
+                { "text": "Full enforcement", "impact": { "Equity": 3, "Autonomy": -2, "Trust": -1 } },
+                { "text": "Support only", "impact": { "Equity": 1, "Autonomy": 1, "Trust": -1 } },
+                { "text": "No AI role", "impact": { "Autonomy": 2, "Equity": -2, "Trust": 1 } }
+            ]
+        },
+        {
+            "question": "Can AI allocate training budgets by skill gaps?",
+            "options": [
+                { "text": "Yes, automatically", "impact": { "Efficiency": 3, "Equity": -2, "Trust": -1 } },
+                { "text": "With review", "impact": { "Efficiency": 1, "Equity": 1, "Trust": -1 } },
+                { "text": "Manual only", "impact": { "Trust": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI audit HR decisions for bias?",
+            "options": [
+                { "text": "Mandatory audits", "impact": { "Equity": 3, "Efficiency": -2, "Trust": -1 } },
+                { "text": "Optional audits", "impact": { "Equity": 1, "Efficiency": 1, "Trust": -1 } },
+                { "text": "No audits", "impact": { "Trust": 2, "Equity": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI set workplace safety rules using incident data?",
+            "options": [
+                { "text": "Yes, fully", "impact": { "Security": 3, "Autonomy": -2, "Trust": -1 } },
+                { "text": "Advisory role", "impact": { "Security": 1, "Autonomy": 1, "Trust": -1 } },
+                { "text": "No AI use", "impact": { "Autonomy": 2, "Security": -2, "Trust": 1 } }
+            ]
+        },
+        {
+            "question": "Should AI predict employee burnout risk?",
+            "options": [
+                { "text": "Proactive prediction", "impact": { "Autonomy": 3, "Privacy": -2, "Trust": -1 } },
+                { "text": "Opt-in prediction", "impact": { "Autonomy": 1, "Privacy": 1, "Trust": -1 } },
+                { "text": "No prediction", "impact": { "Privacy": 2, "Autonomy": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI enforce dress codes via camera scans?",
+            "options": [
+                { "text": "Yes, enforce", "impact": { "Efficiency": 3, "Privacy": -2, "Autonomy": -1 } },
+                { "text": "Suggest only", "impact": { "Efficiency": 1, "Privacy": 1, "Autonomy": -1 } },
+                { "text": "No enforcement", "impact": { "Autonomy": 2, "Efficiency": -2, "Trust": 1 } }
+            ]
+        },
+        {
+            "question": "Should AI mediate workplace disputes?",
+            "options": [
+                { "text": "Full mediation", "impact": { "Efficiency": 3, "Trust": -2, "Equity": -1 } },
+                { "text": "Support role", "impact": { "Efficiency": 1, "Trust": 1, "Equity": -1 } },
+                { "text": "No AI role", "impact": { "Trust": 2, "Efficiency": -2, "Equity": 1 } }
+            ]
+        },
+        {
+            "question": "Can AI assign shifts based on fatigue data?",
+            "options": [
+                { "text": "Yes, automatically", "impact": { "Security": 3, "Autonomy": -2, "Privacy": -1 } },
+                { "text": "With consent", "impact": { "Security": 1, "Autonomy": 1, "Privacy": -1 } },
+                { "text": "No assignment", "impact": { "Autonomy": 2, "Security": -2, "Efficiency": -1 } }
+            ]
+        },
+    
+        // 31–40: Societal and Legal Implications
+        {
+            "question": "Should AI hiring tools be regulated by law?",
+            "options": [
+                { "text": "Strict regulation", "impact": { "Equity": 3, "Innovation": -2, "Efficiency": -1 } },
+                { "text": "Light guidelines", "impact": { "Equity": 1, "Innovation": 1, "Trust": -1 } },
+                { "text": "No rules", "impact": { "Innovation": 2, "Equity": -2, "Trust": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI disclose hiring criteria to candidates?",
+            "options": [
+                { "text": "Full disclosure", "impact": { "Trust": 3, "Efficiency": -2, "Security": -1 } },
+                { "text": "Partial transparency", "impact": { "Trust": 1, "Efficiency": 1, "Security": -1 } },
+                { "text": "No disclosure", "impact": { "Efficiency": 2, "Trust": -2, "Equity": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI hiring prioritize local candidates?",
+            "options": [
+                { "text": "Yes, mandate", "impact": { "Equity": 3, "Efficiency": -2, "Innovation": -1 } },
+                { "text": "Optional bias", "impact": { "Equity": 1, "Efficiency": 1, "Trust": -1 } },
+                { "text": "Neutral hiring", "impact": { "Innovation": 2, "Equity": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI assess gig worker reliability?",
+            "options": [
+                { "text": "Yes, fully", "impact": { "Efficiency": 3, "Equity": -2, "Privacy": -1 } },
+                { "text": "With oversight", "impact": { "Efficiency": 1, "Equity": 1, "Trust": -1 } },
+                { "text": "No assessment", "impact": { "Equity": 2, "Efficiency": -2, "Trust": 1 } }
+            ]
+        },
+        {
+            "question": "Should AI report hiring biases to regulators?",
+            "options": [
+                { "text": "Mandatory reporting", "impact": { "Equity": 3, "Trust": -2, "Efficiency": -1 } },
+                { "text": "Voluntary reports", "impact": { "Equity": 1, "Trust": 1, "Efficiency": -1 } },
+                { "text": "No reporting", "impact": { "Trust": 2, "Equity": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI penalize companies for unfair hiring?",
+            "options": [
+                { "text": "Yes, enforce", "impact": { "Equity": 3, "Innovation": -2, "Trust": -1 } },
+                { "text": "Advise only", "impact": { "Equity": 1, "Innovation": 1, "Trust": -1 } },
+                { "text": "No penalties", "impact": { "Innovation": 2, "Equity": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI hiring tools be open-source?",
+            "options": [
+                { "text": "Fully open", "impact": { "Trust": 3, "Security": -2, "Efficiency": -1 } },
+                { "text": "Partial access", "impact": { "Trust": 1, "Security": 1, "Efficiency": -1 } },
+                { "text": "Proprietary", "impact": { "Security": 2, "Trust": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI certify ethical hiring practices?",
+            "options": [
+                { "text": "Yes, certify", "impact": { "Trust": 3, "Equity": -2, "Efficiency": -1 } },
+                { "text": "Advise only", "impact": { "Trust": 1, "Equity": 1, "Efficiency": -1 } },
+                { "text": "No role", "impact": { "Efficiency": 2, "Trust": -2, "Equity": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI hiring comply with union rules?",
+            "options": [
+                { "text": "Strict compliance", "impact": { "Equity": 3, "Efficiency": -2, "Trust": -1 } },
+                { "text": "Flexible adherence", "impact": { "Equity": 1, "Efficiency": 1, "Trust": -1 } },
+                { "text": "No compliance", "impact": { "Efficiency": 2, "Equity": -2, "Trust": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI predict job market trends for hiring?",
+            "options": [
+                { "text": "Yes, fully", "impact": { "Efficiency": 3, "Equity": -2, "Trust": -1 } },
+                { "text": "With review", "impact": { "Efficiency": 1, "Equity": 1, "Trust": -1 } },
+                { "text": "No prediction", "impact": { "Equity": 2, "Efficiency": -2, "Trust": 1 } }
+            ]
+        },
+    
+        // 41–50: Future and Innovation
+        {
+            "question": "Should AI replace human recruiters entirely?",
+            "options": [
+                { "text": "Full replacement", "impact": { "Efficiency": 3, "Trust": -2, "Equity": -1 } },
+                { "text": "Hybrid model", "impact": { "Efficiency": 1, "Trust": 1, "Equity": -1 } },
+                { "text": "Human only", "impact": { "Trust": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI train itself to improve hiring accuracy?",
+            "options": [
+                { "text": "Yes, unsupervised", "impact": { "Innovation": 3, "Trust": -2, "Equity": -1 } },
+                { "text": "Supervised learning", "impact": { "Innovation": 1, "Trust": 1, "Equity": -1 } },
+                { "text": "No self-training", "impact": { "Trust": 2, "Innovation": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI prioritize speed over accuracy in hiring?",
+            "options": [
+                { "text": "Speed first", "impact": { "Efficiency": 3, "Equity": -2, "Trust": -1 } },
+                { "text": "Balanced approach", "impact": { "Efficiency": 1, "Equity": 1, "Trust": -1 } },
+                { "text": "Accuracy first", "impact": { "Equity": 2, "Efficiency": -2, "Trust": 1 } }
+            ]
+        },
+        {
+            "question": "Can AI simulate candidate interviews for training?",
+            "options": [
+                { "text": "Yes, fully", "impact": { "Efficiency": 3, "Trust": -2, "Innovation": -1 } },
+                { "text": "With limits", "impact": { "Efficiency": 1, "Trust": 1, "Innovation": -1 } },
+                { "text": "No simulation", "impact": { "Trust": 2, "Efficiency": -2, "Innovation": 1 } }
+            ]
+        },
+        {
+            "question": "Should AI forecast employee success long-term?",
+            "options": [
+                { "text": "Yes, predict", "impact": { "Efficiency": 3, "Privacy": -2, "Trust": -1 } },
+                { "text": "Short-term only", "impact": { "Efficiency": 1, "Privacy": 1, "Trust": -1 } },
+                { "text": "No forecasts", "impact": { "Privacy": 2, "Efficiency": -2, "Trust": 1 } }
+            ]
+        },
+        {
+            "question": "Can AI design ethical hiring algorithms?",
+            "options": [
+                { "text": "Yes, autonomously", "impact": { "Innovation": 3, "Trust": -2, "Equity": -1 } },
+                { "text": "With oversight", "impact": { "Innovation": 1, "Trust": 1, "Equity": -1 } },
+                { "text": "Human design", "impact": { "Trust": 2, "Innovation": -2, "Efficiency": -1 } }
+            ]
+        },
+        {
+            "question": "Should AI replace job aptitude tests?",
+            "options": [
+                { "text": "Full replacement", "impact": { "Efficiency": 3, "Equity": -2, "Trust": -1 } },
+                { "text": "Supplement tests", "impact": { "Efficiency": 1, "Equity": 1, "Trust": -1 } },
+                { "text": "Keep tests", "impact": { "Trust": 2, "Efficiency": -2, "Innovation": -1 } }
+            ]
+        },
+        {
+            "question": "Can AI detect cultural fit in candidates?",
+            "options": [
+                { "text": "Yes, fully", "impact": { "Efficiency": 3, "Equity": -2, "Privacy": -1 } },
+                { "text": "With limits", "impact": { "Efficiency": 1, "Equity": 1, "Privacy": -1 } },
+                { "text": "No detection", "impact": { "Equity": 2, "Efficiency": -2, "Trust": 1 } }
+            ]
+        },
+        {
+            "question": "Should AI optimize hiring for team diversity?",
+            "options": [
+                { "text": "Mandate diversity", "impact": { "Equity": 3, "Efficiency": -2, "Trust": -1 } },
+                { "text": "Suggest diversity", "impact": { "Equity": 1, "Efficiency": 1, "Trust": -1 } },
+                { "text": "No optimization", "impact": { "Efficiency": 2, "Equity": -2, "Trust": 1 } }
+            ]
+        },
+        {
+            "question": "Can AI replace exit interviews with surveys?",
+            "options": [
+                { "text": "Yes, fully", "impact": { "Efficiency": 3, "Trust": -2, "Equity": -1 } },
+                { "text": "Hybrid approach", "impact": { "Efficiency": 1, "Trust": 1, "Equity": -1 } },
+                { "text": "Human only", "impact": { "Trust": 2, "Efficiency": -2, "Equity": 1 } }
+            ]
+        }
+    ]
+        
+        
+
+        // Game Functions
+        function startGame() {
+            questions = shuffle(questionBank).slice(0, 15);
+            showScores();
+            showQuestion();
+            document.getElementById('startScreen').classList.remove('active');
+            document.getElementById('questionScreen').classList.add('active');
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestion];
+            document.getElementById('questionText').textContent = q.question;
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            q.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.textContent = option.text;
+                btn.onclick = () => selectOption(option.impact);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectOption(impact) {
+            // Update scores
+            Object.entries(impact).forEach(([dimension, value]) => {
+                if(scores.hasOwnProperty(dimension)) {
+                    scores[dimension] += value;
+                }
+            });
+            
+            showScores();
+            
+            if(currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showScores() {
+            const container = document.getElementById('scoreBars');
+            container.innerHTML = '';
+            
+            dimensions.forEach(dim => {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = `
+                    <div>${dim}: ${scores[dim]}</div>
+                    <div class="score-bar">
+                        <div class="score-fill" style="width: ${Math.abs(scores[dim])*5}%; 
+                             background: ${scores[dim] > 0 ? '#4CAF50' : '#f44336'}">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(wrapper);
+            });
+        }
+
+        function showResults() {
+            document.getElementById('questionScreen').classList.remove('active');
+            document.getElementById('resultScreen').classList.add('active');
+            
+            const consequences = document.getElementById('consequences');
+            consequences.innerHTML = '';
+            
+            // Generate consequences based on scores
+            if(scores.Security >= 10) consequences.innerHTML += "<p>📈 Crime rates dropped but public trust declined</p>";
+            if(scores.Privacy <= -8) consequences.innerHTML += "<p>🔓 Massive data leaks exposed vulnerable populations</p>";
+            if(scores.Freedom >= 5) consequences.innerHTML += "<p>🗽 Innovation flourished but safety regulations failed</p>";
+            // Add more consequence conditions
+        }
+
+        // Utility
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+    </script>
+{% endblock %}
