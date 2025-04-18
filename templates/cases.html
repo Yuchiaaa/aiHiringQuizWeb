@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div id="startScreen" class="screen active">
+<h2>Ethical Framework: CASE STUDIES</h2>
+<br>
+<p>
+  As artificial intelligence becomes more common in recruitment, companies are turning to algorithms to screen resumes, evaluate candidates, and even predict future performance. While efficient, these tools raise serious ethical concerns—especially when they reinforce bias or obscure accountability.
+</p>
+<br>
+<h3>Justice as Fairness</h3>
+<p>
+  This framework, rooted in the philosophy of John Rawls, argues that fairness should guide the structure of all institutions. Applied to AI recruitment, this means systems must actively ensure equal opportunity and avoid reproducing social or economic inequalities.
+</p>
+<p>
+  If an AI model favors candidates from majority groups because it was trained on historical hiring data, it contradicts the principle of fairness. Instead of reflecting past trends, fair systems should be designed to correct them.
+</p>
+<div style="background-color: #f0f0f0; padding: 1rem; border-left: 4px solid #007bff;">
+  <strong>Case Study:</strong> In 2018, Amazon discontinued an AI hiring tool after discovering it systematically ranked male candidates higher than female ones. The model had been trained on past hiring data that reflected a male-dominated tech industry. According to justice as fairness, continuing to use such a model would perpetuate structural injustice.
+</div>
+<br><br>
+<h3>Deontology</h3>
+<p>
+  From a deontological perspective, rooted in the ethics of Immanuel Kant, we must follow moral duties and principles regardless of outcomes. People should never be treated as mere means to an end, but as autonomous individuals deserving respect.
+</p>
+<p>
+  In recruitment, this means AI tools must be transparent and accountable. Candidates have a right to understand how decisions are made. Delegating moral judgments to opaque algorithms without explanation may violate our ethical duty to treat each person with dignity and respect.
+</p>
+<div style="background-color: #f0f0f0; padding: 1rem; border-left: 4px solid #6f42c1;">
+  <strong>Case Study:</strong> The EU's General Data Protection Regulation (GDPR) emphasizes a "right to explanation" when people are subject to automated decision-making. This aligns with deontological ethics: if an applicant is rejected by AI, they must be given an understandable reason, preserving their autonomy and moral agency.
+</div>
+<br><br>
+<h3>Why It Matters</h3>
+<p>
+  These two ethical frameworks offer different but complementary insights. Justice as fairness focuses on outcomes—ensuring equality and correcting bias. Deontology emphasizes the process—treating individuals as morally significant actors. Both are essential when building ethical, trustworthy AI recruitment tools.
+</p>
+</div>
+{% endblock %}
