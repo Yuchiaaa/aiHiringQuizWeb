@@ -1,9 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
-import uuid
-import sqlite3
-from datetime import datetime, timezone
-from random import randint
-from flask_session import Session
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '14806762'
@@ -24,6 +19,19 @@ def dilemas():
 @app.route('/solutions')
 def solutions():
     return render_template("solutions.html")
+
+@app.route('/cases')
+def cases():
+    return render_template("cases.html")
+
+@app.route('/sources')
+def sources():
+    return render_template("sources.html")
+
+@app.route('/about')
+def about():
+    return render_template("about.html")
+
 
 
 if __name__ == '__main__':
